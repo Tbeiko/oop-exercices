@@ -18,47 +18,68 @@
 # After the game, we ask the player if he wants to play again.
 
 class Player 
-  def assert_if_win
+  attr_accessor :name, :marker
 
+  def initialize(name, marker)
+    @name   = name
+    @marker = marker
   end
 
-  def choose_a_square(board,squares)
-    if board.available_squares(squares)
-      puts "Choose an empty square #{board.available_squares}"
+  def choose_a_square(board)
+    if board.available_squares
+
+      begin
+      puts "Choose an empty square from #{board.available_squares}"
+      choice = gets.chomp.to_i 
+      end until board.available_squares.include?(choice)
+      board.mark_square(choice, self.marker)
     end
   end
+
 end
 
 class User < Player
   attr_accessor :name
 
-  def initialize
-    puts "What is your name, sir?"
+  def initialize(marker)
+    puts "What is your name ?"
     @name = gets.chomp
     puts "Welcome to Tic Tac Toe, #{self.name}"
     sleep 0.5
+    @marker = marker
   end
 
 end
 
 class Cpu < Player 
 
-  def choose_a_square
-    attack
-    defend
-    pick_random_square
+  def choose_a_square(board)
+    attack(board)
+    defend(board)
+    pick_random_square(board)
   end
 
-  def attack
+  # This isn't working. Need to figure it out. Maybe move it to another place?
+  def attack(board)
+    Board::WINNING_LINES.each do |l|
+    defend_this_square = board.two_in_a_row({l[0] => @squares[l[0]], l[1] => @squares[l[1]],  
+                                       l[2] => @squares[l[2]]}, @user1.marker)
+    if defend_this_square == true
+      @squares[defend_this_square] = self.marker
+      break
+    else
+    end
+  end
 
   end
 
-  def defend
+  def defend(board)
 
   end
 
-  def pick_random_square
-
+  def pick_random_square(board)
+    choice = board.available_squares.sample 
+    board.mark_square(choice, self.marker)
   end
 
 end
@@ -66,6 +87,7 @@ end
 class Board 
 
   attr_accessor :squares
+  attr_reader :name, :marker
 
   WINNING_LINES = [[1,2,3],[4,5,6],[7,8,9],[1,4,7],[2,5,8],[3,6,9],[1,5,9],[3,5,7]]
 
@@ -73,10 +95,10 @@ class Board
     @squares = {1 => " ", 2 => " ", 3 => " ",
                 4 => " ", 5 => " ", 6 => " ",
                 7 => " ", 8 => " ", 9 => " "}
-    draw_board
   end
 
   def draw_board
+    system 'cls'
     puts "   |   |   "
     puts " #{squares[1]} | #{squares[2]} | #{squares[3]}"
     puts "   |   |   "
@@ -90,40 +112,105 @@ class Board
     puts "   |   |   "
   end
 
-  def available_squares(squares)
-    squares.select{|_,v| v == " "}.keys
+  def available_squares
+    @squares.select{|_,v| v == " "}.keys
   end
 
-  def two_in_a_row
+  def all_squares_taken
+    available_squares == []
+  end
 
+  def mark_square(choice, marker)
+    @squares[choice] = marker
+  end
+  # Checks if two of the same marker in a winning row, if so, returns the empty square from that row.
+  # Need to implement this in ATTACK + DEFENSE METHOD FROM CPU 
+  def two_in_a_row(hash, marker)
+    if hash.values.count(marker) == 2
+      hash.select{|k,v| v == " "}.keys.first
+    else
+      false
+    end
+  end 
+
+  def three_in_a_row(marker)
+    WINNING_LINES.each do |line|
+      return true if (@squares[line[0]] == marker) && (@squares[line[1]] == marker) &&
+      (@squares[line[2]] == marker)
+      end
+    false
+  end
+
+  def assert_if_win(player)
+    if all_squares_taken
+      puts "It's a tie!"
+      sleep 1
+    elsif three_in_a_row(player.marker)
+      puts "TIC TAC TOE"
+      sleep 0.5
+      puts "#{player.name} wins!"
+      sleep 1
+    else
+    end
   end
 
 end
 
-
-class Mark 
-  attr_accessor :user_mark, :cpu_mark
-
-  @user_mark = "X"
-  @cpu_mark  = "O"
-
-end
 
 class TicTacToe
-  attr_accessor :game_board 
+
 
   def initialize
-    system 'cls'
-    @user1      = User.new
-    @computer   = Cpu.new
-    @game_board = Board.new
+    @user1      = User.new("X")
+    @computer   = Cpu.new("Computer", "O")
+  end
+
+  def select_first_player
+    random = [1,2].sample
+    if random == 1
+      @current_player = @user1
+    else
+      @current_player = @computer
+    end
+  end
+
+
+  def alternate_player
+    if @current_player == @user1
+      @current_player = @computer
+    else 
+      @current_player = @user1
+    end
   end
 
   def run
-    @user1.choose_a_square(@game_board, @squares)
+    begin
+    play_again = true  
+    @game_board = Board.new
+    select_first_player
+      begin
+        alternate_player
+        @game_board.draw_board
+        if @current_player == @computer
+          puts "Computer is strategizing"
+          sleep 1
+        end
+        @current_player.choose_a_square(@game_board)
+        @game_board.draw_board
+        @game_board.assert_if_win(@current_player)
+      end until @game_board.all_squares_taken || @game_board.three_in_a_row(@current_player.marker)
 
+      puts "Play Again? (y/n)"
+      again = gets.chomp.downcase
+        if again == 'y' || again == 'yes'
+          play_again = true
+        else
+          play_again = false
+        end
+    end until play_again == false
+
+    puts "Thanks for playing!"
   end
 end
 
-@newgame = TicTacToe.new
-@newgame.run
+@newgame = TicTacToe.new.run
