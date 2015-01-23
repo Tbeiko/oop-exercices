@@ -54,27 +54,24 @@ end
 class Cpu < Player 
 
   def choose_a_square(board)
+    count_1 = board.available_squares.count 
     attack(board)
-    defend(board)
-    pick_random_square(board)
-  end
-
-  # This isn't working. Need to figure it out. Maybe move it to another place?
-  def attack(board)
-    Board::WINNING_LINES.each do |l|
-    defend_this_square = board.two_in_a_row({l[0] => @squares[l[0]], l[1] => @squares[l[1]],  
-                                       l[2] => @squares[l[2]]}, @user1.marker)
-    if defend_this_square == true
-      @squares[defend_this_square] = self.marker
-      break
-    else
+    count_2 = board.available_squares.count 
+    if count_1 == count_2
+      defend(board)
+    end
+    count_3 = board.available_squares.count 
+    if count_1 == count_3
+      pick_random_square(board)
     end
   end
 
+  def attack(board)
+    board.square_to_attack?(self)
   end
 
   def defend(board)
-
+    board.square_to_defend?(self)
   end
 
   def pick_random_square(board)
@@ -123,8 +120,8 @@ class Board
   def mark_square(choice, marker)
     @squares[choice] = marker
   end
+
   # Checks if two of the same marker in a winning row, if so, returns the empty square from that row.
-  # Need to implement this in ATTACK + DEFENSE METHOD FROM CPU 
   def two_in_a_row(hash, marker)
     if hash.values.count(marker) == 2
       hash.select{|k,v| v == " "}.keys.first
@@ -132,6 +129,28 @@ class Board
       false
     end
   end 
+
+  def square_to_defend?(player)
+    WINNING_LINES.each do |line|
+    @defendable_square = self.two_in_a_row({line[0] => @squares[line[0]], line[1] => @squares[line[1]],  
+                         line[2] => @squares[line[2]]}, "X")
+      if @defendable_square
+        mark_square(@defendable_square, player.marker)
+        break
+      end
+    end
+  end
+
+  def square_to_attack?(player)
+    WINNING_LINES.each do |line|
+    @attackable_square = self.two_in_a_row({line[0] => @squares[line[0]], line[1] => @squares[line[1]],  
+                         line[2] => @squares[line[2]]}, "O")
+      if @attackable_square
+        mark_square(@attackable_square, player.marker)
+        break
+      end
+    end
+  end
 
   def three_in_a_row(marker)
     WINNING_LINES.each do |line|
