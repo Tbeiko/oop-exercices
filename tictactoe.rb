@@ -110,7 +110,7 @@ class Board
   end
 
   def available_squares
-    @squares.select{|_,v| v == " "}.keys
+    @squares.select{|_,mark| mark == " "}.keys
   end
 
   def all_squares_taken
@@ -122,9 +122,9 @@ class Board
   end
 
   # Checks if two of the same marker in a winning row, if so, returns the empty square from that row.
-  def two_in_a_row(hash, marker)
-    if hash.values.count(marker) == 2
-      hash.select{|k,v| v == " "}.keys.first
+  def two_in_a_row(line_and_squares, marker)
+    if line_and_squares.values.count(marker) == 2
+      line_and_squares.select{|position,mark| mark == " "}.keys.first
     else
       false
     end
@@ -202,34 +202,45 @@ class TicTacToe
     end
   end
 
+  def play_again?
+    puts "Play Again? (y/n)"
+    again = gets.chomp.downcase
+      if again == 'y' || again == 'yes'
+        @play_again = true
+      else
+        @play_again = false
+      end
+  end
+
+  def make_a_move(player, board)
+    player.choose_a_square(board)
+    board.draw_board
+    board.assert_if_win(player)
+  end
+
+  def display_cpu_turn
+    if @current_player == @computer
+      puts "Computer is strategizing"
+      sleep 1
+    end
+  end
+
+
   def run
     begin
-    play_again = true  
     @game_board = Board.new
     select_first_player
       begin
         alternate_player
         @game_board.draw_board
-        if @current_player == @computer
-          puts "Computer is strategizing"
-          sleep 1
-        end
-        @current_player.choose_a_square(@game_board)
-        @game_board.draw_board
-        @game_board.assert_if_win(@current_player)
+        display_cpu_turn
+        make_a_move(@current_player, @game_board)
       end until @game_board.all_squares_taken || @game_board.three_in_a_row(@current_player.marker)
-
-      puts "Play Again? (y/n)"
-      again = gets.chomp.downcase
-        if again == 'y' || again == 'yes'
-          play_again = true
-        else
-          play_again = false
-        end
-    end until play_again == false
-
+      play_again?
+    end until @play_again == false
     puts "Thanks for playing!"
   end
+
 end
 
 @newgame = TicTacToe.new.run
