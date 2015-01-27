@@ -121,10 +121,10 @@ end
 
 class Blackjack
   include Sayable
+  @@game_count = 0
 
   def initialize
-    @dealer = Computer.new("Dealer")
-    @deck   = Deck.new
+    @@game_count += 1 
   end
 
   def greet
@@ -176,6 +176,26 @@ class Blackjack
     assert_if_blackjack_or_bust(player)
   end
 
+  def dealer_plays(dealer, user, deck)
+    unless @blackjack || @bust 
+      begin
+        sleep 1
+        puts "The dealer gets another card."
+        player_gets_a_card(dealer, deck)
+      end until @blackjack || @bust || dealer.total >= 17
+    end
+
+    unless @blackjack || @bust
+      puts "Things are getting serious!"
+      sleep 1
+      begin
+        puts "The dealer gets another card."
+        player_gets_a_card(dealer, deck)
+        sleep 1
+      end until @blackjack || @bust || dealer.total > user.total 
+    end
+  end
+
   def display_final_scores(user, dealer)
     unless @blackjack
       unless dealer.total == 0 
@@ -192,39 +212,47 @@ class Blackjack
     end
   end
 
+  def reset
+    @user.hand  = []
+    @user.total = 0
+    @dealer = Computer.new("Dealer")
+    @deck   = Deck.new
+    @blackjack = false 
+    @bust = false 
+    system 'cls'
+  end
+
+  def another_game?
+    puts "Another game? (yes/no)"
+    play_again = gets.chomp.downcase
+    if play_again == 'yes' || play_again == 'y'
+      true
+    else 
+      false
+    end
+  end
+
   def play
     greet
     @user = User.new
     sleep 0.5
-    system 'cls'
-    2.times{player_gets_a_card(@user, @deck)}
+    begin
+      reset
 
-    unless @blackjack
-      sleep 1
-      player_gets_a_card(@dealer, @deck)
-      hit_or_stay(@user, @deck)
-    end
+      2.times{player_gets_a_card(@user, @deck)}
 
-    unless @blackjack || @bust 
-      begin
+      unless @blackjack
         sleep 1
-        puts "The dealer gets another card."
         player_gets_a_card(@dealer, @deck)
-      end until @blackjack || @bust || @dealer.total >= 17
-    end
+        hit_or_stay(@user, @deck)
+      end
 
-    unless @blackjack || @bust
-      puts "Things are getting serious!"
-      sleep 1
-      begin
-        puts "The dealer gets another card."
-        player_gets_a_card(@dealer, @deck)
-        sleep 1
-      end until @blackjack || @bust || @dealer.total > @user.total 
-    end
+      dealer_plays(@dealer, @user, @deck)
+      display_final_scores(@user, @dealer)
 
-    display_final_scores(@user, @dealer)
+    end until (another_game? == false) 
 
+    say "Thank you for playing!"
   end
 
 end
