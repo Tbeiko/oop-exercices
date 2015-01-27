@@ -53,12 +53,6 @@ class Player
   attr_accessor :name, :hand, :total
   include Sayable
 
-  def hit
-  end
-
-  def stay
-  end
-
   def draw_card(deck)
     card = deck.cards.pop 
     self.hand.push(card)
@@ -198,9 +192,7 @@ class Blackjack
 
   def display_final_scores(user, dealer)
     unless @blackjack
-      unless dealer.total == 0 
       say "House total : #{dealer.total}"
-      end
       say "Your total  : #{user.total}"
       unless @bust
         if @dealer.total > @user.total
