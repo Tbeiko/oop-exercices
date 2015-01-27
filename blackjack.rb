@@ -44,7 +44,7 @@ class Deck
   CARDS = ['ACE', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'JACK', 'QUEEN', 'KING']
 
   def initialize
-    @cards = SUITS.product(CARDS).shuffle!
+    self.cards = SUITS.product(CARDS).shuffle!
   end
 
 end
@@ -96,17 +96,17 @@ end
 class User < Player 
 
   def initialize
-    @hand  = []
-    @total = 0
+    self.hand  = []
+    self.total = 0
   end
 
 end
 
 class Computer < Player
   def initialize(name)
-    @name  = name
-    @hand  = []
-    @total = 0
+    self.name  = name
+    self.hand  = []
+    self.total = 0
   end
 end
 
