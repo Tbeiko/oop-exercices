@@ -96,9 +96,6 @@ end
 class User < Player 
 
   def initialize
-    say "May I have your name ?"
-    @name  = gets.chomp
-    say "Thank you, #{self.name}."
     @hand  = []
     @total = 0
   end
@@ -114,18 +111,24 @@ class Computer < Player
 end
 
 class Blackjack
+  attr_accessor :name
+
   include Sayable
   @@game_count = 0
 
   def initialize
     @@game_count += 1 
+    @user = User.new
   end
 
-  def greet
+  def greet(user)
     puts
     say "Good evening sir, welcome to the blackjack table at Tim's Casino."
     puts
     sleep 0.25
+    say "May I have your name ?"
+    user.name  = gets.chomp
+    say "Thank you, #{user.name}."
   end
 
   def assert_if_blackjack_or_bust(player)
@@ -148,16 +151,14 @@ class Blackjack
       wants_another_card = gets.chomp.downcase
         if wants_another_card == 'yes'
           say "There you go."
-          player.draw_card(deck)
+          player_gets_a_card(player, deck)
         elsif wants_another_card == 'no'
           say "Okay then."
+          player.describe_player_hand
           want_to_hit = false
         else
           say "I'm sorry, I didn't get that. Please answer by 'yes' or 'no' "
         end
-      player.describe_player_hand
-      player.calculate_player_total
-      assert_if_blackjack_or_bust(player)
     end until @blackjack || @bust || want_to_hit == false
   end
 
@@ -171,6 +172,7 @@ class Blackjack
   end
 
   def dealer_plays(dealer, user, deck)
+    # Dealer must reach at least 17
     unless @blackjack || @bust 
       begin
         sleep 1
@@ -178,7 +180,7 @@ class Blackjack
         player_gets_a_card(dealer, deck)
       end until @blackjack || @bust || dealer.total >= 17
     end
-
+    # Dealer will go on until he beats user or busts or blackjacks
     unless @blackjack || @bust
       puts "Things are getting serious!"
       sleep 1
@@ -225,25 +227,19 @@ class Blackjack
   end
 
   def play
-    greet
-    @user = User.new
+    greet(@user)
     sleep 0.5
     begin
       reset
-
       2.times{player_gets_a_card(@user, @deck)}
-
       unless @blackjack
         sleep 1
         player_gets_a_card(@dealer, @deck)
         hit_or_stay(@user, @deck)
       end
-
       dealer_plays(@dealer, @user, @deck)
       display_final_scores(@user, @dealer)
-
     end until (another_game? == false) 
-
     say "Thank you for playing!"
   end
 
